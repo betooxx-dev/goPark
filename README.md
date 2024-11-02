@@ -2,6 +2,8 @@
 
 Un simulador de estacionamiento concurrente desarrollado en Go utilizando Fyne para la interfaz gráfica. goPark simula la gestión de un estacionamiento con múltiples autos entrando y saliendo simultáneamente, demostrando conceptos de programación concurrente y sincronización.
 
+![image](https://github.com/user-attachments/assets/65bb3f1e-86d9-4602-80fa-ce4aef3a0907)
+
 ## 🚀 Características
 
 - Simulación en tiempo real de 100 autos
