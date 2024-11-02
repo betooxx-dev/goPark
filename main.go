@@ -65,7 +65,7 @@ func (pl *ParkingLot) updateStatus() {
         pl.totalCars)
 
     if pl.totalCars >= 100 && pl.activeCount == 0 {
-        status += "\n¡Simulación Completada! Todos los autos han sido procesados."
+        status = "¡SIMULACIÓN COMPLETADA!\nTodos los autos (100) han sido procesados.\nLa ventana se cerrará en 5 segundos."
     }
     
     pl.statusLabel.SetText(status)
@@ -215,15 +215,24 @@ func main() {
     
     parkingLot = NewParkingLot(updateUI, statusLabel)
 
-    var stopButton *widget.Button
+    var currentCarID = 1
+    var simulationDone = make(chan bool)
+
+    var stopButton, resumeButton, startButton *widget.Button
     
+    resumeButton = widget.NewButton("Reanudar", func() {
+        parkingLot.isRunning = true
+        stopButton.Enable()
+        resumeButton.Disable()
+    })
+    resumeButton.Disable()
+
     stopButton = widget.NewButton("Detener", func() {
         parkingLot.isRunning = false
         stopButton.Disable()
+        resumeButton.Enable()
     })
     stopButton.Disable()
-
-    var startButton *widget.Button
 
     startButton = widget.NewButton("Iniciar Simulación", func() {
         startButton.Disable()
@@ -231,35 +240,53 @@ func main() {
         parkingLot.isRunning = true
         
         go func() {
-            for i := 1; i <= 100 && parkingLot.isRunning; i++ {
-                parkingLot.wg.Add(1)
-                carID := i
-                time.Sleep(time.Duration(rand.Intn(1000)) * time.Millisecond)
-                
-                go func(id int) {
-                    success := false
-                    for !success && parkingLot.isRunning {
-                        success = parkingLot.enterParking(id)
-                        if !success {
-                            time.Sleep(500 * time.Millisecond)
+            for currentCarID <= 100 {
+                if parkingLot.isRunning {
+                    parkingLot.wg.Add(1)
+                    carID := currentCarID
+                    currentCarID++
+                    time.Sleep(time.Duration(rand.Intn(1000)) * time.Millisecond)
+                    
+                    go func(id int) {
+                        success := false
+                        for !success {
+                            if parkingLot.isRunning {
+                                success = parkingLot.enterParking(id)
+                                if !success {
+                                    time.Sleep(500 * time.Millisecond)
+                                }
+                            } else {
+                                time.Sleep(100 * time.Millisecond)
+                            }
                         }
-                    }
-                    if !success {
-                        parkingLot.wg.Done()
-                    }
-                }(carID)
+                        if !success {
+                            parkingLot.wg.Done()
+                        }
+                    }(carID)
+                } else {
+                    time.Sleep(100 * time.Millisecond)
+                }
             }
             
             // Esperar a que todos los autos terminen
             go func() {
                 parkingLot.wg.Wait()
                 stopButton.Disable()
+                resumeButton.Disable()
                 parkingLot.updateStatus()
+                simulationDone <- true
             }()
+        }()
+
+        // Goroutine para manejar la finalización
+        go func() {
+            <-simulationDone
+            time.Sleep(5 * time.Second)
+            window.Close()
         }()
     })
     
-    buttonContainer := container.NewHBox(startButton, stopButton)
+    buttonContainer := container.NewHBox(startButton, stopButton, resumeButton)
     
     mainContainer := container.NewVBox(
         statusLabel,
