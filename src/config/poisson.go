@@ -6,13 +6,11 @@ import (
 	"time"
 )
 
-// PoissonProcess genera eventos siguiendo una distribución de Poisson
 type PoissonProcess struct {
 	lambda   float64 // tasa media de llegadas por unidad de tiempo
 	lastTime time.Time
 }
 
-// NewPoissonProcess crea un nuevo proceso de Poisson con la tasa lambda dada
 func NewPoissonProcess(lambda float64) *PoissonProcess {
 	return &PoissonProcess{
 		lambda:   lambda,
@@ -20,9 +18,7 @@ func NewPoissonProcess(lambda float64) *PoissonProcess {
 	}
 }
 
-// NextInterval retorna el siguiente intervalo de tiempo según la distribución de Poisson
 func (p *PoissonProcess) NextInterval() time.Duration {
-	// La distribución exponencial modela el tiempo entre eventos de Poisson
 	u := rand.Float64()
 	// Próximo intervalo = -ln(U)/λ donde U es uniforme(0,1)
 	interval := -math.Log(u) / p.lambda
@@ -31,7 +27,6 @@ func (p *PoissonProcess) NextInterval() time.Duration {
 	return time.Duration(interval * float64(time.Second))
 }
 
-// GeneratePoisson genera un número según la distribución de Poisson
 func GeneratePoisson(lambda float64) int {
 	L := math.Exp(-lambda)
 	k := 0

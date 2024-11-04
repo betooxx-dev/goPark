@@ -5,15 +5,9 @@ import (
 	"time"
 )
 
-// Configuración del estacionamiento
 const (
-	// Capacidad total del estacionamiento
 	TotalParkingSpots = 20
-
-	// Número total de autos a procesar en la simulación
 	TotalCarsToProcess = 100
-
-	// Tiempo de espera para cerrar la ventana al finalizar
 	WindowCloseDelay = 5 * time.Second
 )
 
@@ -45,21 +39,17 @@ const (
 // Parámetros de Poisson
 const (
 	// Lambda representa la tasa media de llegadas por segundo
-	// Ajustar este valor afectará la frecuencia de llegadas
 	DefaultLambda = 0.167 // aproximadamente 5 autos por minuto
 )
 
 // Configuración de la interfaz gráfica
 const (
-	// Tamaño inicial de la ventana
 	DefaultWindowWidth  = 600
 	DefaultWindowHeight = 300
 
-	// Número de columnas en la cuadrícula de estacionamiento
 	ParkingGridColumns = 5
 )
 
-// Símbolos para la interfaz gráfica
 const (
 	EmptySpotSymbol = "🅿️"
 	CarSymbol       = "🚗"
@@ -67,28 +57,23 @@ const (
 
 // Estados y mensajes del sistema
 const (
-	// Título de la ventana
 	WindowTitle = "goPark - Simulador de Estacionamiento"
 
-	// Mensajes de estado
 	InitialStatusMessage      = "Estado: Iniciando..."
 	SimulationCompleteMessage = "¡SIMULACIÓN COMPLETADA!\nTodos los autos (%d) han sido procesados.\nLa ventana se cerrará en %d segundos."
 	StatusTemplate            = "Estado: %d/%d lugares ocupados | Procesados: %d/%d"
 
-	// Textos de los botones
 	StartButtonText  = "Iniciar Simulación"
 	StopButtonText   = "Detener"
 	ResumeButtonText = "Reanudar"
 )
 
-// Direcciones de flujo
 const (
 	DirectionNoneText = "Libre"
 	DirectionInText   = "Entrada"
 	DirectionOutText  = "Salida"
 )
 
-// Contiene mensajes de error comunes
 var ErrorMessages = struct {
 	ParkingFull   string
 	InvalidSpotID string
@@ -101,13 +86,11 @@ var ErrorMessages = struct {
 	SystemStopped: "El sistema está detenido",
 }
 
-// Configuración de canales y buffers
 const (
 	// Tamaño del buffer para el canal de semáforos
 	SpotSemaphoreBuffer = TotalParkingSpots
 )
 
-// Convierte una dirección en su texto correspondiente
 func GetDirectionText(direction string) string {
 	switch direction {
 	case "in":
@@ -119,18 +102,16 @@ func GetDirectionText(direction string) string {
 	}
 }
 
-// Formatea el mensaje de estado
 func GetStatusMessage(occupied, total, waiting int, direction string, processed, target int) string {
 	return fmt.Sprintf(
 		StatusTemplate,
 		occupied,
 		total,
-		processed,
+		processed, 
 		target,
 	)
 }
 
-// Formatea el mensaje de finalización
 func GetCompletionMessage() string {
 	return fmt.Sprintf(
 		SimulationCompleteMessage,

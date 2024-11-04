@@ -22,7 +22,6 @@ type GUI struct {
 	handlers     *Handlers
 }
 
-// Crea una nueva instancia de la interfaz gráfica
 func NewGUI(handlers *Handlers) *GUI {
 	gui := &GUI{
 		app:          app.New(),
@@ -36,7 +35,6 @@ func NewGUI(handlers *Handlers) *GUI {
 	return gui
 }
 
-// Configura todos los elementos de la interfaz
 func (g *GUI) setupUI() {
 	// Crear el contenedor de espacios de estacionamiento
 	parkingContainer := container.NewGridWithColumns(config.ParkingGridColumns)
@@ -73,7 +71,6 @@ func (g *GUI) setupUI() {
 	))
 }
 
-// Configura los botones y sus callbacks
 func (g *GUI) setupButtons() {
 	g.startButton = widget.NewButton(config.StartButtonText, func() {
 		g.handlers.HandleStart()
@@ -94,7 +91,6 @@ func (g *GUI) setupButtons() {
 	g.updateButtonStates(true, false, false)
 }
 
-// Actualiza el estado de habilitación de los botones
 func (g *GUI) updateButtonStates(startEnabled, stopEnabled, resumeEnabled bool) {
 	g.startButton.Enable()
 	if !startEnabled {
@@ -112,12 +108,10 @@ func (g *GUI) updateButtonStates(startEnabled, stopEnabled, resumeEnabled bool) 
 	}
 }
 
-// Actualiza la etiqueta de estado
 func (g *GUI) UpdateStatus(status string) {
 	g.statusLabel.SetText(status)
 }
 
-// Actualiza la visualización de un espacio de estacionamiento
 func (g *GUI) UpdateSpot(spotID int, spot *models.ParkingSpot) {
 	if spot.IsOccupied() {
 		g.parkingSpots[spotID].SetText(config.CarSymbol + "\n" + fmt.Sprintf("%d", spot.GetCarID()))
@@ -126,17 +120,14 @@ func (g *GUI) UpdateSpot(spotID int, spot *models.ParkingSpot) {
 	}
 }
 
-// Deshabilita todos los botones
 func (g *GUI) DisableAllButtons() {
 	g.updateButtonStates(false, false, false)
 }
 
-// Cierra la ventana de la aplicación
 func (g *GUI) Close() {
 	g.window.Close()
 }
 
-// Inicia la ejecución de la interfaz gráfica
 func (g *GUI) Run() {
 	g.window.ShowAndRun()
 }
