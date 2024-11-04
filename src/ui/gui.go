@@ -56,8 +56,6 @@ func (g *GUI) setupUI() {
 	// Crear contenedor de botones
 	buttonContainer := container.NewHBox(
 		g.startButton,
-		g.stopButton,
-		g.resumeButton,
 	)
 
 	// Crear contenedor principal

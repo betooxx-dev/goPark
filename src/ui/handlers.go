@@ -15,13 +15,17 @@ type Handlers struct {
 	simulationDone chan bool
 	mutex          sync.Mutex
 	isProcessing   bool
+	poissonProcess *config.PoissonProcess
 }
 
 func NewHandlers() *Handlers {
+	lambda := 0.167
+
 	h := &Handlers{
 		currentCarID:   1,
 		simulationDone: make(chan bool),
 		isProcessing:   false,
+		poissonProcess: config.NewPoissonProcess(lambda),
 	}
 
 	h.parkingLot = core.NewParkingLot(
@@ -30,6 +34,45 @@ func NewHandlers() *Handlers {
 	)
 
 	return h
+}
+
+func (h *Handlers) runSimulation() {
+	for h.currentCarID <= config.TotalCarsToProcess {
+		if !h.parkingLot.IsRunning() {
+			time.Sleep(config.DirectionCheckDelay)
+			continue
+		}
+
+		h.mutex.Lock()
+		carID := h.currentCarID
+		h.currentCarID++
+		h.mutex.Unlock()
+
+		h.parkingLot.WaitGroup().Add(1)
+
+		// Usar distribución de Poisson para el intervalo entre llegadas
+		arrivalDelay := h.poissonProcess.NextInterval()
+
+		// Limitar el intervalo para evitar esperas muy largas
+		if arrivalDelay > config.MaxCarArrivalInterval {
+			arrivalDelay = config.MaxCarArrivalInterval
+		}
+		if arrivalDelay < config.MinCarArrivalInterval {
+			arrivalDelay = config.MinCarArrivalInterval
+		}
+
+		time.Sleep(arrivalDelay)
+		go h.processCar(carID)
+	}
+
+	go func() {
+		h.parkingLot.WaitGroup().Wait()
+		h.simulationDone <- true
+
+		h.mutex.Lock()
+		h.isProcessing = false
+		h.mutex.Unlock()
+	}()
 }
 
 func (h *Handlers) SetGUI(gui *GUI) {
@@ -84,36 +127,6 @@ func (h *Handlers) HandleStop() {
 
 func (h *Handlers) HandleResume() {
 	h.parkingLot.Start()
-}
-
-func (h *Handlers) runSimulation() {
-	for h.currentCarID <= config.TotalCarsToProcess && h.parkingLot.IsRunning() {
-		h.mutex.Lock()
-		carID := h.currentCarID
-		h.currentCarID++
-		h.mutex.Unlock()
-
-		h.parkingLot.WaitGroup().Add(1)
-
-		arrivalDelay := time.Duration(
-			config.MinCarArrivalInterval.Nanoseconds() +
-				time.Now().UnixNano()%
-					(config.MaxCarArrivalInterval.Nanoseconds()-
-						config.MinCarArrivalInterval.Nanoseconds()),
-		)
-		time.Sleep(arrivalDelay)
-
-		go h.processCar(carID)
-	}
-
-	go func() {
-		h.parkingLot.WaitGroup().Wait()
-		h.simulationDone <- true
-
-		h.mutex.Lock()
-		h.isProcessing = false
-		h.mutex.Unlock()
-	}()
 }
 
 func (h *Handlers) processCar(carID int) {

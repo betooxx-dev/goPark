@@ -42,6 +42,13 @@ const (
 	MaxCarArrivalInterval = 500 * time.Millisecond
 )
 
+// Parámetros de Poisson
+const (
+	// Lambda representa la tasa media de llegadas por segundo
+	// Ajustar este valor afectará la frecuencia de llegadas
+	DefaultLambda = 0.167 // aproximadamente 5 autos por minuto
+)
+
 // Configuración de la interfaz gráfica
 const (
 	// Tamaño inicial de la ventana
@@ -66,7 +73,7 @@ const (
 	// Mensajes de estado
 	InitialStatusMessage      = "Estado: Iniciando..."
 	SimulationCompleteMessage = "¡SIMULACIÓN COMPLETADA!\nTodos los autos (%d) han sido procesados.\nLa ventana se cerrará en %d segundos."
-	StatusTemplate            = "Estado: %d/%d lugares ocupados | %d autos esperando | Dirección: %s | Procesados: %d/%d"
+	StatusTemplate            = "Estado: %d/%d lugares ocupados | Procesados: %d/%d"
 
 	// Textos de los botones
 	StartButtonText  = "Iniciar Simulación"
@@ -118,8 +125,6 @@ func GetStatusMessage(occupied, total, waiting int, direction string, processed,
 		StatusTemplate,
 		occupied,
 		total,
-		waiting,
-		GetDirectionText(direction),
 		processed,
 		target,
 	)
