@@ -24,22 +24,22 @@ const (
 	MaxParkingTime = 5 * time.Second
 
 	// Rango de tiempo para la entrada de un auto
-	MinEntryTime = 500 * time.Millisecond
-	MaxEntryTime = 2 * time.Second
+	MinEntryTime = 100 * time.Millisecond
+	MaxEntryTime = 200 * time.Millisecond
 
 	// Rango de tiempo para la salida de un auto
-	MinExitTime = 500 * time.Millisecond
-	MaxExitTime = time.Second
+	MinExitTime = 100 * time.Millisecond
+	MaxExitTime = 200 * time.Millisecond
 
 	// Tiempo de espera entre intentos de estacionamiento
-	RetryParkingDelay = 500 * time.Millisecond
+	RetryParkingDelay = 100 * time.Millisecond
 
 	// Tiempo de espera para verificar cambios de dirección
 	DirectionCheckDelay = 100 * time.Millisecond
 
 	// Intervalo entre llegadas de nuevos autos
-	MinCarArrivalInterval = 500 * time.Millisecond
-	MaxCarArrivalInterval = time.Second
+	MinCarArrivalInterval = 100 * time.Millisecond
+	MaxCarArrivalInterval = 500 * time.Millisecond
 )
 
 // Configuración de la interfaz gráfica

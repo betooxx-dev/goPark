@@ -2,17 +2,15 @@ package models
 
 import "time"
 
-// Representa un automóvil en el sistema de estacionamiento
 type Car struct {
-	ID          int           // Identificador único del auto
-	EntryTime   time.Time     // Hora de entrada al estacionamiento
-	ParkingSpot int           // ID del espacio de estacionamiento asignado (-1 si no está estacionado)
-	IsParked    bool          // Indica si el auto está estacionado
-	IsWaiting   bool          // Indica si el auto está esperando para entrar
-	ParkingTime time.Duration // Tiempo que el auto permanecerá estacionado
+	ID          int
+	EntryTime   time.Time
+	ParkingSpot int
+	IsParked    bool
+	IsWaiting   bool
+	ParkingTime time.Duration
 }
 
-// Crea una nueva instancia de Car
 func NewCar(id int) *Car {
 	return &Car{
 		ID:          id,
@@ -22,7 +20,6 @@ func NewCar(id int) *Car {
 	}
 }
 
-// Asigna un espacio de estacionamiento al auto
 func (c *Car) Park(spotID int, parkingTime time.Duration) {
 	c.ParkingSpot = spotID
 	c.IsParked = true
@@ -31,7 +28,6 @@ func (c *Car) Park(spotID int, parkingTime time.Duration) {
 	c.ParkingTime = parkingTime
 }
 
-// Marca el auto como no estacionado
 func (c *Car) Leave() {
 	c.ParkingSpot = -1
 	c.IsParked = false
@@ -39,12 +35,10 @@ func (c *Car) Leave() {
 	c.ParkingTime = 0
 }
 
-// Marca el auto como en espera
 func (c *Car) SetWaiting(waiting bool) {
 	c.IsWaiting = waiting
 }
 
-// Retorna el tiempo que el auto ha estado estacionado
 func (c *Car) GetTimeParked() time.Duration {
 	if !c.IsParked {
 		return 0
@@ -52,7 +46,6 @@ func (c *Car) GetTimeParked() time.Duration {
 	return time.Since(c.EntryTime)
 }
 
-// Verifica si el auto debe salir basado en su tiempo de estacionamiento
 func (c *Car) ShouldLeave() bool {
 	return c.IsParked && c.GetTimeParked() >= c.ParkingTime
 }

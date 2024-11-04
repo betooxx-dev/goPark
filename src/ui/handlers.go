@@ -8,23 +8,22 @@ import (
 	"time"
 )
 
-// Maneja la lógica de eventos de la UI
 type Handlers struct {
 	parkingLot     *core.ParkingLot
 	gui            *GUI
 	currentCarID   int
 	simulationDone chan bool
 	mutex          sync.Mutex
+	isProcessing   bool
 }
 
-// Crea una nueva instancia de Handlers
 func NewHandlers() *Handlers {
 	h := &Handlers{
 		currentCarID:   1,
 		simulationDone: make(chan bool),
+		isProcessing:   false,
 	}
 
-	// Crear instancia de ParkingLot con callbacks
 	h.parkingLot = core.NewParkingLot(
 		h.handleStatusChanged,
 		h.handleSpotChanged,
@@ -33,13 +32,15 @@ func NewHandlers() *Handlers {
 	return h
 }
 
-// Establece la referencia a la interfaz gráfica
 func (h *Handlers) SetGUI(gui *GUI) {
 	h.gui = gui
 }
 
-// Maneja los cambios de estado del estacionamiento
 func (h *Handlers) handleStatusChanged(status core.ParkingLotStatus) {
+	if h.gui == nil {
+		return
+	}
+
 	if status.IsCompleted {
 		h.gui.UpdateStatus(config.GetCompletionMessage())
 		h.handleSimulationComplete()
@@ -57,77 +58,90 @@ func (h *Handlers) handleStatusChanged(status core.ParkingLotStatus) {
 	h.gui.UpdateStatus(statusMsg)
 }
 
-// Maneja los cambios en los espacios de estacionamiento
 func (h *Handlers) handleSpotChanged(spotID int, spot *models.ParkingSpot) {
+	if h.gui == nil {
+		return
+	}
 	h.gui.UpdateSpot(spotID, spot)
 }
 
-// Maneja el evento de inicio de simulación
 func (h *Handlers) HandleStart() {
+	h.mutex.Lock()
+	if h.isProcessing {
+		h.mutex.Unlock()
+		return
+	}
+	h.isProcessing = true
+	h.mutex.Unlock()
+
 	h.parkingLot.Start()
 	go h.runSimulation()
 }
 
-// Maneja el evento de detención de simulación
 func (h *Handlers) HandleStop() {
 	h.parkingLot.Stop()
 }
 
-// Maneja el evento de reanudación de simulación
 func (h *Handlers) HandleResume() {
 	h.parkingLot.Start()
 }
 
-// Ejecuta la simulación principal
 func (h *Handlers) runSimulation() {
-	for h.currentCarID <= config.TotalCarsToProcess {
-		if h.parkingLot.IsRunning() {
-			h.mutex.Lock()
-			carID := h.currentCarID
-			h.currentCarID++
-			h.mutex.Unlock()
+	for h.currentCarID <= config.TotalCarsToProcess && h.parkingLot.IsRunning() {
+		h.mutex.Lock()
+		carID := h.currentCarID
+		h.currentCarID++
+		h.mutex.Unlock()
 
-			h.parkingLot.WaitGroup().Add(1)
+		h.parkingLot.WaitGroup().Add(1)
 
-			// Generar intervalo aleatorio entre llegadas de autos
-			arrivalDelay := time.Duration(
-				config.MinCarArrivalInterval.Nanoseconds() +
-					time.Now().UnixNano()%
-						(config.MaxCarArrivalInterval.Nanoseconds()-
-							config.MinCarArrivalInterval.Nanoseconds()),
-			)
-			time.Sleep(arrivalDelay)
+		arrivalDelay := time.Duration(
+			config.MinCarArrivalInterval.Nanoseconds() +
+				time.Now().UnixNano()%
+					(config.MaxCarArrivalInterval.Nanoseconds()-
+						config.MinCarArrivalInterval.Nanoseconds()),
+		)
+		time.Sleep(arrivalDelay)
 
-			go h.processCar(carID)
-		} else {
-			time.Sleep(config.DirectionCheckDelay)
-		}
+		go h.processCar(carID)
 	}
 
-	// Esperar a que todos los autos terminen
 	go func() {
 		h.parkingLot.WaitGroup().Wait()
 		h.simulationDone <- true
+
+		h.mutex.Lock()
+		h.isProcessing = false
+		h.mutex.Unlock()
 	}()
 }
 
-// Maneja el proceso de un auto individual
 func (h *Handlers) processCar(carID int) {
-	success := false
-	for !success {
-		if h.parkingLot.IsRunning() {
-			success = h.parkingLot.EnterParking(carID)
-			if !success {
-				time.Sleep(config.RetryParkingDelay)
-			}
-		} else {
+	maxRetries := 50
+	retryCount := 0
+
+	for retryCount < maxRetries {
+		if !h.parkingLot.IsRunning() {
 			time.Sleep(config.DirectionCheckDelay)
+			continue
 		}
+
+		if h.parkingLot.EnterParking(carID) {
+			return
+		}
+
+		retryCount++
+		time.Sleep(config.RetryParkingDelay)
 	}
+
+	h.parkingLot.WaitGroup().Done()
 }
 
-// Maneja la finalización de la simulación
 func (h *Handlers) handleSimulationComplete() {
+	if h.gui == nil {
+		return
+	}
+
 	h.gui.DisableAllButtons()
 	go func() {
 		time.Sleep(config.WindowCloseDelay)
